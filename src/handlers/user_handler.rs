@@ -1,0 +1,74 @@
+use axum::{
+	extract::{Path, State},
+	http::StatusCode,
+	response::{IntoResponse, Response},
+	Json,
+};
+use std::sync::Arc;
+
+use crate::{
+	app_state::AppState,
+	error::{Error, Result},
+	models,
+	ports::UserService,
+	services,
+};
+
+pub async fn get_users_handler(
+	State(app_state): State<Arc<AppState<services::UserService>>>,
+) -> Result<Response> {
+	let users = app_state.user_service.fetch_all_users().await?;
+
+	Ok((StatusCode::OK, Json(users)).into_response())
+}
+
+pub async fn get_user_handler(
+	State(app_state): State<Arc<AppState<services::UserService>>>,
+	Path(user_id): Path<String>,
+) -> Result<Response> {
+	let uuid = uuid::Uuid::parse_str(&user_id)
+		.map_err(|_| Error::InvalidInput("Invalid UUID format".to_string()))?;
+
+	let user = app_state.user_service.fetch_user_by_id(uuid).await?;
+	Ok((StatusCode::OK, Json(user)).into_response())
+}
+
+pub async fn create_user_handler(
+	State(app_state): State<Arc<AppState<services::UserService>>>,
+	Json(payload): Json<models::NewUser>,
+) -> Response {
+	match app_state.user_service.add_user(payload).await {
+		Ok(user) => (StatusCode::CREATED, Json(user)).into_response(),
+		Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
+	}
+}
+
+pub async fn update_user_handler(
+	State(app_state): State<Arc<AppState<services::UserService>>>,
+	Path(user_id): Path<String>,
+	Json(payload): Json<models::NewUser>,
+) -> Result<Response> {
+	let uuid = uuid::Uuid::parse_str(&user_id)
+		.map_err(|_| Error::InvalidInput("Invalid UUID format".to_string()))?;
+
+	let user = models::User {
+		id: uuid,
+		first_name: payload.first_name,
+		last_name: payload.last_name,
+		email: payload.email,
+	};
+	let user = app_state.user_service.update_user(user).await?;
+
+	Ok((StatusCode::OK, Json(user)).into_response())
+}
+
+pub async fn delete_user_handler(
+	State(app_state): State<Arc<AppState<services::UserService>>>,
+	Path(user_id): Path<String>,
+) -> Result<Response> {
+	let uuid = uuid::Uuid::parse_str(&user_id)
+		.map_err(|_| Error::InvalidInput("Invalid UUID format".to_string()))?;
+
+	app_state.user_service.delete_user(uuid).await?;
+	Ok(StatusCode::NO_CONTENT.into_response())
+}

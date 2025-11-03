@@ -1,26 +1,38 @@
 use std::env;
 
-use axum::{Router, routing::get};
 use dotenvy::dotenv;
 use tracing_subscriber::EnvFilter;
 
+use crate::app_state::AppState;
+
+mod app_state;
+mod error;
+mod handlers;
+mod models;
+mod ports;
+mod routes;
+mod services;
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    dotenv().ok();
+	dotenv().ok();
 
-    let port = env::var("PORT").unwrap_or_else(|_| "3000".into());
+	let port = env::var("PORT").unwrap_or_else(|_| "3000".into());
 
-    tracing_subscriber::fmt()
-        .with_env_filter(EnvFilter::from_default_env())
-        .init();
+	tracing_subscriber::fmt()
+		.with_env_filter(EnvFilter::from_default_env())
+		.init();
 
-    let app = Router::new().route("/", get(|| async { "Hello, Axum!" }));
+	let user_service = services::UserService::new();
+	let app_state = AppState::new(user_service);
 
-    tracing::info!("Listening on port {port}");
-    let listener = tokio::net::TcpListener::bind(format!("127.0.0.1:{port}")).await?;
-    axum::serve(listener, app).await?;
+	let app = routes::UserRoute::create_router(app_state);
 
-    tracing::info!("Shutting down gracefully");
+	tracing::info!("Listening on port {port}");
+	let listener = tokio::net::TcpListener::bind(format!("127.0.0.1:{port}")).await?;
+	axum::serve(listener, app).await?;
 
-    Ok(())
+	tracing::info!("Shutting down gracefully");
+
+	Ok(())
 }
