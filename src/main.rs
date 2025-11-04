@@ -10,6 +10,7 @@ mod error;
 mod handlers;
 mod models;
 mod ports;
+mod repositories;
 mod routes;
 mod services;
 
@@ -23,7 +24,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 		.with_env_filter(EnvFilter::from_default_env())
 		.init();
 
-	let user_service = services::UserService::new();
+	let user_repository = repositories::InMemoryUserRepository::new();
+	let user_service = services::UserService::new(user_repository);
 	let app_state = AppState::new(user_service);
 
 	let app = routes::UserRoute::create_router(app_state);

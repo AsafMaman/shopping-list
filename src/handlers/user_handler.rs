@@ -11,21 +11,24 @@ use crate::{
 	error::{Error, Result},
 	models,
 	ports::UserService,
-	services,
 };
 
-pub async fn get_users_handler(
-	State(app_state): State<Arc<AppState<services::UserService>>>,
-) -> Result<Response> {
+pub async fn get_users_handler<T>(State(app_state): State<Arc<AppState<T>>>) -> Result<Response>
+where
+	T: UserService + Send + Sync + 'static,
+{
 	let users = app_state.user_service.fetch_all_users().await?;
 
 	Ok((StatusCode::OK, Json(users)).into_response())
 }
 
-pub async fn get_user_handler(
-	State(app_state): State<Arc<AppState<services::UserService>>>,
+pub async fn get_user_handler<T>(
+	State(app_state): State<Arc<AppState<T>>>,
 	Path(user_id): Path<String>,
-) -> Result<Response> {
+) -> Result<Response>
+where
+	T: UserService + Send + Sync + 'static,
+{
 	let uuid = uuid::Uuid::parse_str(&user_id)
 		.map_err(|_| Error::InvalidInput("Invalid UUID format".to_string()))?;
 
@@ -33,21 +36,27 @@ pub async fn get_user_handler(
 	Ok((StatusCode::OK, Json(user)).into_response())
 }
 
-pub async fn create_user_handler(
-	State(app_state): State<Arc<AppState<services::UserService>>>,
+pub async fn create_user_handler<T>(
+	State(app_state): State<Arc<AppState<T>>>,
 	Json(payload): Json<models::NewUser>,
-) -> Response {
+) -> Response
+where
+	T: UserService + Send + Sync + 'static,
+{
 	match app_state.user_service.add_user(payload).await {
 		Ok(user) => (StatusCode::CREATED, Json(user)).into_response(),
 		Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
 	}
 }
 
-pub async fn update_user_handler(
-	State(app_state): State<Arc<AppState<services::UserService>>>,
+pub async fn update_user_handler<T>(
+	State(app_state): State<Arc<AppState<T>>>,
 	Path(user_id): Path<String>,
 	Json(payload): Json<models::NewUser>,
-) -> Result<Response> {
+) -> Result<Response>
+where
+	T: UserService + Send + Sync + 'static,
+{
 	let uuid = uuid::Uuid::parse_str(&user_id)
 		.map_err(|_| Error::InvalidInput("Invalid UUID format".to_string()))?;
 
@@ -62,10 +71,13 @@ pub async fn update_user_handler(
 	Ok((StatusCode::OK, Json(user)).into_response())
 }
 
-pub async fn delete_user_handler(
-	State(app_state): State<Arc<AppState<services::UserService>>>,
+pub async fn delete_user_handler<T>(
+	State(app_state): State<Arc<AppState<T>>>,
 	Path(user_id): Path<String>,
-) -> Result<Response> {
+) -> Result<Response>
+where
+	T: UserService + Send + Sync + 'static,
+{
 	let uuid = uuid::Uuid::parse_str(&user_id)
 		.map_err(|_| Error::InvalidInput("Invalid UUID format".to_string()))?;
 

@@ -1,2 +1,2 @@
-mod user;
-pub use user::UserRoute;
+mod user_route;
+pub use user_route::UserRoute;

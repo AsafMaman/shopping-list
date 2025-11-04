@@ -1,17 +1,17 @@
 use crate::ports::UserService;
 
-pub struct AppState<U>
+pub struct AppState<T>
 where
-	U: UserService + Send + Sync + 'static,
+	T: UserService + Send + Sync + 'static,
 {
-	pub user_service: U,
+	pub user_service: T,
 }
 
-impl<U> AppState<U>
+impl<T> AppState<T>
 where
-	U: UserService + Send + Sync + 'static,
+	T: UserService + Send + Sync + 'static,
 {
-	pub fn new(user_service: U) -> Self {
+	pub fn new(user_service: T) -> Self {
 		Self { user_service }
 	}
 }

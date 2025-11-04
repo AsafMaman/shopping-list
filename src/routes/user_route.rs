@@ -6,14 +6,17 @@ use crate::{
 		create_user_handler, delete_user_handler, get_user_handler, get_users_handler,
 		update_user_handler,
 	},
-	services,
+	ports,
 };
 use axum::{routing::get, Router};
 
 pub struct UserRoute {}
 
 impl UserRoute {
-	pub fn create_router(app_state: AppState<services::UserService>) -> Router {
+	pub fn create_router<T>(app_state: AppState<T>) -> Router
+	where
+		T: ports::UserService + Send + Sync + 'static,
+	{
 		Router::new()
 			.route("/users", get(get_users_handler).post(create_user_handler))
 			.route(
