@@ -1,6 +1,7 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 
-#[derive(Debug, Clone, serde::Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct User {
 	pub id: uuid::Uuid,
 	pub first_name: String,
@@ -8,7 +9,7 @@ pub struct User {
 	pub email: String,
 }
 
-#[derive(Debug, Clone, serde::Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct NewUser {
 	pub first_name: String,
 	pub last_name: String,

@@ -4,6 +4,8 @@ use dotenvy::dotenv;
 use tracing_subscriber::EnvFilter;
 
 use shopping_list::{repositories, routes, services, AppState};
+use utoipa::OpenApi;
+use utoipa_swagger_ui::SwaggerUi;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -19,7 +21,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 	let user_service = services::UserService::new(user_repository);
 	let app_state = AppState::new(user_service);
 
-	let app = routes::UserRoute::create_router(app_state);
+	let app = routes::UserRoute::create_router(app_state).merge(SwaggerUi::new("/swagger-ui").url(
+		"/api-docs/openapi.json",
+		shopping_list::handlers::ApiDoc::openapi(),
+	));
 
 	tracing::info!("Listening on port {port}");
 	let listener = tokio::net::TcpListener::bind(format!("127.0.0.1:{port}")).await?;
