@@ -1,8 +1,10 @@
 use crate::{error::Result, models};
 use async_trait::async_trait;
+use mockall::automock;
 use uuid::Uuid;
 
 #[async_trait]
+#[automock]
 pub trait UserRepository: Send + Sync + 'static {
 	async fn fetch_user_by_id(&self, user_id: Uuid) -> Result<models::User>;
 	async fn fetch_all_users(&self) -> Result<Vec<models::User>>;

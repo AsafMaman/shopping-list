@@ -1,5 +1,5 @@
 [package]
-name = "shopping-list"
+name = "shopping_list"
 version = "0.1.0"
 edition = "2024"
 
@@ -7,8 +7,15 @@ edition = "2024"
 async-trait = "0.1.89"
 axum = "0.8.6"
 dotenvy = "0.15.7"
+mockall = "0.13.1"
 serde = { version = "1.0.228", features = ["derive"] }
 tokio = { version = "1.48.0", features = ["full"] }
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.20", features = ["env-filter"] }
 uuid = { version = "1.18.1", features = ["v4", "serde"] }
+
+[dev-dependencies]
+axum-test = "18.2.1"
+fakeit = "1.3.0"
+serde_json = "1.0.145"
+tokio-test = "0.4.4"

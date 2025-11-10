@@ -3,16 +3,7 @@ use std::env;
 use dotenvy::dotenv;
 use tracing_subscriber::EnvFilter;
 
-use crate::app_state::AppState;
-
-mod app_state;
-mod error;
-mod handlers;
-mod models;
-mod ports;
-mod repositories;
-mod routes;
-mod services;
+use shopping_list::{repositories, routes, services, AppState};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
