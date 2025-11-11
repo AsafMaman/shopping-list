@@ -1,1 +1,14 @@
 /target
+
+# Database files
+/db/
+*.db
+*.db-shm
+*.db-wal
+
+# Environment files
+.env.local
+.env
+
+# MacOS files
+.DS_Store
