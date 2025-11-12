@@ -1,17 +1,47 @@
-name: Rust
+name: Rust CI Checks
 
 on:
   push:
     branches: [ "master" ]
   pull_request:
     branches: [ "master" ]
+  workflow_dispatch:
 
 env:
   CARGO_TERM_COLOR: always
+  DATABASE_URL: sqlite:ci_test.db
 
 jobs:
-  build:
+  format:
+    name: Check Formatting
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust toolchain (stable)
+        uses: dtolnay/rust-toolchain@v1
+        with:
+          toolchain: stable
+          components: rustfmt
+      - name: Run cargo fmt check
+        run: cargo fmt --all -- --check
 
+  clippy:
+    name: Run Clippy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust toolchain (stable)
+        uses: dtolnay/rust-toolchain@v1
+        with:
+          toolchain: stable
+          components: clippy
+      - name: Run cargo clippy
+        # -D warnings treats all warnings as errors, forcing a failure if linting issues are found
+        run: cargo clippy --all-targets --all-features -- -D warnings
+        
+  # 3. Build and Test Job (Runs on matrix for compatibility)
+  test:
+    name: Build and Test (${{ matrix.toolchain }})
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -22,7 +52,42 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+    
+    - name: Install Rust toolchain
+      uses: dtolnay/rust-toolchain@v1
+      with:
+        toolchain: ${{ matrix.toolchain }}
+    
+    - name: Cache cargo registry
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
+        key: ${{ runner.os }}-cargo-${{ matrix.toolchain }}-${{ hashFiles('**/Cargo.lock') }}
+    
+    # Cache SQLx CLI to avoid reinstalling every time
+    - name: Cache SQLx CLI
+      uses: actions/cache@v4
+      with:
+        path: ~/.cargo/bin/sqlx
+        key: sqlx-cli-${{ runner.os }}
+    
+    # Setup for SQLx
+    - name: Install SQLx CLI and Run Migrations
+      run: |
+        # Install sqlx-cli if not cached
+        if ! command -v sqlx &> /dev/null; then
+          cargo install sqlx-cli --no-default-features --features sqlite
+        fi
+        # Create the temporary database file
+        touch ci_test.db
+        # Run the migrations
+        sqlx migrate run
+    
     - name: Build
       run: cargo build --verbose
+    
     - name: Run tests
       run: cargo test --verbose

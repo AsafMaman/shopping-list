@@ -37,6 +37,12 @@ impl InMemoryUserRepository {
 	}
 }
 
+impl Default for InMemoryUserRepository {
+	fn default() -> Self {
+		Self::new()
+	}
+}
+
 #[async_trait]
 impl UserRepository for InMemoryUserRepository {
 	async fn fetch_user_by_id(&self, user_id: Uuid) -> Result<models::User> {
